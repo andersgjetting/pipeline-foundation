@@ -1,0 +1,177 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  v.1.0.0 Roles and Policies needed by CI/CD pipeline
+  This stack should never be executed manually.
+Parameters:
+  AppName:
+    Type: String
+    Description: Name of the application.
+    MinLength: "1"
+    MaxLength: "100"
+Resources:
+  CodeBuildRole:
+    Description: Creating service role in IAM for AWS CodeBuild
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub '${AppName}-codebuild-role'
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+  CodeBuildRolePolicy:
+    Description: Setting IAM policy for the service role for AWS CodeBuild
+    Type: 'AWS::IAM::Policy'
+    DependsOn: CodeBuildRole
+    Properties:
+      PolicyName: CodeBuildRolePolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+            Resource:
+              - '*'
+          - Effect: Allow
+            Resource:
+              - '*'
+            Action:
+              - 's3:*'
+          - Effect: Allow
+            Resource:
+              - '*'
+            Action:
+              - 'kms:GenerateDataKey*'
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+          - Effect: Allow
+            Resource:
+              - '*'
+            Action:
+              - 'sns:SendMessage'
+      Roles:
+        - !Ref CodeBuildRole
+  CloudFormationRole:
+    Description: Creating service role in IAM for AWS CloudFormation
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub '${AppName}-cloudformation-role'
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - cloudformation.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+  CloudFormationRolePolicy:
+    Description: Setting IAM policy for the service role for AWS CloudFormation
+    Type: 'AWS::IAM::Policy'
+    DependsOn: CloudFormationRole
+    Properties:
+      PolicyName: CloudFormationRolePolicy
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:GetObject'
+              - 's3:GetObjectVersion'
+              - 's3:GetBucketVersioning'
+            Resource: '*'
+            Effect: Allow
+          - Action:
+              - 'lambda:*'
+            Resource: '*'
+            Effect: Allow
+          - Action:
+              - 'apigateway:*'
+            Resource: !Sub 'arn:aws:apigateway:${AWS::Region}::*'
+            Effect: Allow
+          - Action:
+              - 'iam:GetRole'
+              - 'iam:CreateRole'
+              - 'iam:DeleteRole'
+            Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/*'
+            Effect: Allow
+          - Action:
+              - 'iam:AttachRolePolicy'
+              - 'iam:DetachRolePolicy'
+            Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/*'
+            Effect: Allow
+          - Action:
+              - 'iam:PassRole'
+            Resource:
+              - '*'
+            Effect: Allow
+          - Action:
+              - 'cloudformation:CreateChangeSet'
+            Resource: !Sub 'arn:aws:cloudformation:${AWS::Region}:aws:transform/${AppName}-2017-09-15'
+            Effect: Allow
+      Roles:
+        - !Ref CloudFormationRole
+  CodePipelineRole:
+    Description: Creating service role in IAM for AWS CodePipeline
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub '${AppName}-codepipeline-role'
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+  CodePipelineRolePolicy:
+    Description: Setting IAM policy for the service role for AWS CodePipeline
+    Type: 'AWS::IAM::Policy'
+    DependsOn: CodePipelineRole
+    Properties:
+      PolicyName: CodePipelineRolePolicy
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:GetObject'
+              - 's3:GetObjectVersion'
+              - 's3:GetBucketVersioning'
+            Resource: '*'
+            Effect: Allow
+          - Action:
+              - 'codebuild:StartBuild'
+              - 'codebuild:BatchGetBuilds'
+            Resource: '*'
+            Effect: Allow
+          - Action:
+              - 'cloudwatch:*'
+              - 's3:*'
+              - 'sns:*'
+              - 'cloudformation:*'
+              - 'rds:*'
+              - 'sqs:*'
+              - 'iam:PassRole'
+            Resource: '*'
+            Effect: Allow
+          - Action:
+              - 'lambda:InvokeFunction'
+              - 'lambda:ListFunctions'
+              - 'lambda:ListTags'
+              - 'lambda:TagResource'
+              - 'lambda:UntagResource'
+            Resource: '*'
+            Effect: Allow
+      Roles:
+        - !Ref CodePipelineRole
+Outputs:
+  CodePipelineRoleArn:
+    Description: "Role for code pipeline"
+    Value: !GetAtt CodePipelineRole.Arn
+  CloudformationRoleArn:
+    Description: "Role for cloudformation to deploy with"
+    Value: !GetAtt CloudFormationRole.Arn
+  CodeBuildRoleArn:
+    Description: "Role for code build to build"
+    Value: !GetAtt CodeBuildRole.Arn
