@@ -3,7 +3,7 @@ version: 0.2
 phases:
   install:
     commands:
-      - echo "No installing needed"
+      - execute as changeset template.yaml {exports }
   pre_build:
     commands:
       - echo "No pre_build needed"
@@ -11,11 +11,12 @@ phases:
 
   build:
     commands:
-      - aws s3api put-object --bucket cf-templates-test-to-delete --key pipeline-resources/pipeline-roles.yaml --body pipeline-roles.yaml
-      - aws s3api put-object --bucket cf-templates-test-to-delete --key pipeline-resources/pipeline-resources.yaml --body pipeline-resources.yaml
+      - aws s3api put-object --bucket $S3Bucket --key pipeline-resources/pipeline-roles.yaml --body pipeline-roles.yaml
+      - aws s3api put-object --bucket $S3Bucket --key pipeline-resources/pipeline-resources.yaml --body pipeline-resources.yaml
   post_build:
     commands:
       - echo "build completed on `date`"
+
 #artifacts:
   #files:
     #- template-output.yaml
