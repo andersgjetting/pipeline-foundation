@@ -11,7 +11,7 @@ phases:
 
   build:
     commands:
-      - echo "Copy resources to $S3_BUCKET"
+      - echo "Copy the following resources to $S3_BUCKET"
       - aws s3api put-object --bucket $S3_BUCKET --key pipeline-resources/pipeline-roles.yaml --body pipeline-roles.yaml
       - aws s3api put-object --bucket $S3_BUCKET --key pipeline-resources/pipeline-resources.yaml --body pipeline-resources.yaml
   post_build:
