@@ -11,8 +11,8 @@ phases:
 
   build:
     commands:
-      - aws s3api put-object --bucket $S3Bucket --key pipeline-resources/pipeline-roles.yaml --body pipeline-roles.yaml
-      - aws s3api put-object --bucket $S3Bucket --key pipeline-resources/pipeline-resources.yaml --body pipeline-resources.yaml
+      - aws s3api put-object --bucket $S3_BUCKET --key pipeline-resources/pipeline-roles.yaml --body pipeline-roles.yaml
+      - aws s3api put-object --bucket $S3_BUCKET --key pipeline-resources/pipeline-resources.yaml --body pipeline-resources.yaml
   post_build:
     commands:
       - echo "build completed on `date`"
